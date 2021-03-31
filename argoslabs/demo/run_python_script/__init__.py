@@ -21,11 +21,9 @@ ARGOS LABS plugin module
 
 
 ################################################################################
-import os
 import sys
 import types
 import traceback
-import shlex
 import subprocess
 from alabs.common.util.vvargs import ModuleContext, func_log, \
     ArgsError, ArgsExit, get_icon_path
@@ -35,11 +33,10 @@ CONTEXT = '''
 
 import sys
 import traceback
-import shlex
 import subprocess    
 
 def _run_plugin(cmd):
-    with subprocess.Popen(shlex.split(cmd), shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
+    with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
         out = proc.stdout.read().decode('utf-8')
         err = proc.stderr.read().decode('utf-8')
     return out, err
@@ -68,6 +65,7 @@ def install(packages):
           f'--trusted-host pypi-official.argos-labs.com -U --no-cache-dir ' \
           f'--disable-pip-version-check'
     proc = subprocess.run(cmd, shell=True, capture_output=True)
+    # if error or warning message
     if proc.stderr:
         raise ValueError(proc.stderr.decode('utf-8'))
 
@@ -102,13 +100,10 @@ def run_script(mcxt, argspec):
     mcxt.logger.info('>>>starting...')
     code = ''
     try:
-        global CONTEXT
-        with open(argspec.python_script, 'r', encoding='utf-8') as f:
-            code = f.read()
-
         if not argspec.arguments:
             argspec.arguments = []
         arguments = list(map(lambda x: f'"{x}"', argspec.arguments))
+        # preventing to recognize backslash as ESCAPE character
         arguments = [x.replace('\\', '\\\\') for x in arguments]
 
         if not argspec.key_arguments:
@@ -126,9 +121,14 @@ def run_script(mcxt, argspec):
 
         arguments = arguments + key_arguments
         arguments = ', '.join(arguments)
+
+        # making the code
+        global CONTEXT
+        with open(argspec.python_script, 'r', encoding='utf-8') as f:
+            code = f.read()
         code = CONTEXT.format(code=code, arguments=arguments)
 
-        # Install python modules
+        # install python modules
         if hasattr(argspec, 'install') and argspec.install:
             install(argspec.install)
 
@@ -148,6 +148,7 @@ def run_script(mcxt, argspec):
         return 0
 
     except Exception as err:
+        # inserting number at the each line of code for debuging
         code = insert_number_each_line(code)
         sys.stderr.write('\n' + code + '\n')
         traceback.print_exc()
@@ -177,11 +178,13 @@ def _main(*args):
             icon_path=get_icon_path(__file__),
             description='Python Script Runner',
     ) as mcxt:
+        # todo: user can select python script file or code
         mcxt.add_argument('python_script', input_method='fileread',
                           help='python script')
         mcxt.add_argument('-i', '--install', action='append')
         mcxt.add_argument('-a', '--arguments', action='append')
         mcxt.add_argument('-k', '--key-arguments', action='append')
+        # todo: using hidden option: --code option
         mcxt.add_argument('-c', '--code', action='store_true')
         argspec = mcxt.parse_args(args)
         return run_script(mcxt, argspec)
