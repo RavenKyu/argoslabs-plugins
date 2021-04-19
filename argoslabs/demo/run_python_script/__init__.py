@@ -60,6 +60,7 @@ def install(packages):
         executable = str(pathlib.PureWindowsPath(sys.executable))
     else:
         executable = sys.executable
+    executable = '"' + executable + '"'
     cmd = f'{executable} -m pip install {packages} ' \
           f'-i https://pypi-official.argos-labs.com/simple ' \
           f'--trusted-host pypi-official.argos-labs.com -U --no-cache-dir ' \
