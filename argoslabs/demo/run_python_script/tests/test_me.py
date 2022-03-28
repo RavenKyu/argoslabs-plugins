@@ -61,7 +61,7 @@ class TU(TestCase):
         outfile = 'stdout.txt'
         expect = "('1', '2', '3')"
         try:
-            r = main(SAMPLE_SCRIPT_1, '-a1', '-a2', '-a3',
+            r = main('--python_file', SAMPLE_SCRIPT_1, '-a1', '-a2', '-a3',
                      '--outfile', outfile)
             self.assertTrue(r == 0)
             with open(outfile, encoding='utf-8') as ifp:
@@ -77,7 +77,7 @@ class TU(TestCase):
         # 스크립트에서 요구한 파라메터 개수가 맞지 않을때 에러
         outfile = 'stderr.txt'
         try:
-            r = main(SAMPLE_SCRIPT_1, '-a1', '-a2',
+            r = main('--python_file', SAMPLE_SCRIPT_1, '-a1', '-a2',
                      '--errfile', outfile)
             self.assertEqual(r, 1)
         finally:
@@ -90,7 +90,7 @@ class TU(TestCase):
         outfile = 'stderr.txt'
         try:
             # with self.assertRaises(TypeError):
-            r = main(SAMPLE_SCRIPT_1, '-a1', '-a2', '-a3', '-k abc=4',
+            r = main('--python_file', SAMPLE_SCRIPT_1, '-a1', '-a2', '-a3', '-k abc=4',
                      '--errfile', outfile)
             self.assertEqual(r, 1)
         finally:
@@ -102,7 +102,7 @@ class TU(TestCase):
         # 키워드 사용, 같은 이름의 변수가 있으면 해당 변수에 대입
         outfile = 'stdout.txt'
         try:
-            r = main(SAMPLE_SCRIPT_2, '-a1', '-a2', '-k abc=4', '-k c=3',
+            r = main('--python_file', SAMPLE_SCRIPT_2, '-a1', '-a2', '-k abc=4', '-k c=3',
                      '--outfile', outfile)
             self.assertEqual(r, 0)
             with open(outfile, encoding='utf-8') as ifp:
@@ -117,7 +117,7 @@ class TU(TestCase):
         # 키워드 사용, 같은 이름의 변수가 있으면 해당 변수에 대입
         outfile = 'stdout.txt'
         try:
-            r = main(SAMPLE_SCRIPT_10, '-a1', '-a2', '-a3', '--outfile', outfile)
+            r = main('--python_file', SAMPLE_SCRIPT_10, '-a1', '-a2', '-a3', '--outfile', outfile)
             self.assertEqual(r, 0)
             with open(outfile, encoding='utf-8') as ifp:
                 rs = ifp.read()

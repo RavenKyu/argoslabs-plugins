@@ -27,6 +27,7 @@ import traceback
 import subprocess
 from alabs.common.util.vvargs import ModuleContext, func_log, \
     ArgsError, ArgsExit, get_icon_path
+import re
 
 CONTEXT = '''
 {code}
@@ -54,6 +55,8 @@ if __name__ == '__main__':
 
 ###############################################################################
 def install(packages):
+    packages = packages.replace('\\n', '\n')
+    packages = packages.split('\n')
     packages = ' '.join(packages)
     if sys.platform == 'win32':
         import pathlib
@@ -125,13 +128,28 @@ def run_script(mcxt, argspec):
 
         # making the code
         global CONTEXT
-        with open(argspec.python_script, 'r', encoding='utf-8') as f:
-            code = f.read()
+        if argspec.python_script:
+            code = argspec.python_script
+            code = code.replace('\\n', '\n')
+            code = code.replace('\\t', '    ')
+        else:
+            with open(argspec.python_file, 'r', encoding='utf-8') as f:
+                code = f.read()
+
+        # check existing the main function
+        r = re.compile('def main')
+        # if not r.findall(argspec.python_script):
+        if not r.findall(code):
+            raise ValueError(
+                'There is no \'main\' function in your code. '
+                'The function is the starting point for this plugin. '
+                'It must be in your code.')
+
         code = CONTEXT.format(code=code, arguments=arguments)
 
         # install python modules
-        if hasattr(argspec, 'install') and argspec.install:
-            install(argspec.install)
+        if hasattr(argspec, 'requirements') and argspec.requirements:
+            install(argspec.requirements)
 
         # For developing mode. printing assembled code.
         if argspec.code:
@@ -149,7 +167,7 @@ def run_script(mcxt, argspec):
         return 0
 
     except Exception as err:
-        # inserting number at the each line of code for debuging
+        # inserting number at the each line of code for debugging
         code = insert_number_each_line(code)
         sys.stderr.write('\n' + code + '\n')
         traceback.print_exc()
@@ -179,14 +197,42 @@ def _main(*args):
             icon_path=get_icon_path(__file__),
             description='Python Script Runner',
     ) as mcxt:
-        # todo: user can select python script file or code
-        mcxt.add_argument('python_script', input_method='fileread',
-                          help='python script')
-        mcxt.add_argument('-i', '--install', action='append')
-        mcxt.add_argument('-a', '--arguments', action='append')
-        mcxt.add_argument('-k', '--key-arguments', action='append')
+        mcxt.add_argument('--python_script',
+                          input_method='multiline;python',
+                          display_name='Python Script',
+                          show_default=True,
+                          input_group='radio=Code;defalut',
+                          help='def main():')
+        mcxt.add_argument('--python_file',
+                          display_name='Python File',
+                          show_default=True,
+                          input_method='fileread',
+                          input_group='radio=Code',
+                          help='my_script.py')
+
+        mcxt.add_argument('-a', '--arguments',
+                          display_name='Arguments',
+                          show_default=True,
+                          input_group='Arguments',
+                          action='append',
+                          help='abc or 123 - every values treats as string')
+        mcxt.add_argument('-k', '--key-arguments',
+                          display_name='Keyword Arguments',
+                          show_default=True,
+                          input_group='Arguments',
+                          action='append',
+                          help='abc=123 or def="hello world" - '
+                               'every values treats as string')
+
+        mcxt.add_argument('-r', '--requirements',
+                          display_name='Requirements',
+                          input_method='multiline;plain',
+                          help='write module list you need to install '
+                               'like requirements.txt')
+
         # todo: using hidden option: --code option
         mcxt.add_argument('-c', '--code', action='store_true')
+
         argspec = mcxt.parse_args(args)
         return run_script(mcxt, argspec)
 
