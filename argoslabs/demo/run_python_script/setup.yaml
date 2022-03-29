@@ -26,4 +26,4 @@ setup:
     argoslabs.demo.run_python_script: ['icon.*']
   url: https://www.argos-labs.com
   # do not start '0'
-  version: 3.507.1938
+  version: 4.329.1544

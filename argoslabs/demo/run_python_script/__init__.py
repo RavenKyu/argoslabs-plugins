@@ -29,8 +29,7 @@ from alabs.common.util.vvargs import ModuleContext, func_log, \
     ArgsError, ArgsExit, get_icon_path
 import re
 
-CONTEXT = '''
-{code}
+CONTEXT = '''{code}
 
 import sys
 import traceback
@@ -167,10 +166,13 @@ def run_script(mcxt, argspec):
         return 0
 
     except Exception as err:
-        # inserting number at the each line of code for debugging
-        code = insert_number_each_line(code)
-        sys.stderr.write('\n' + code + '\n')
         traceback.print_exc()
+
+        if argspec.detail_error:
+            # inserting number at the each line of code for debugging
+            code = insert_number_each_line(code)
+            sys.stderr.write('\n' + code + '\n')
+
         msg = str(err)
         mcxt.logger.error(msg)
         return 1
@@ -229,6 +231,10 @@ def _main(*args):
                           input_method='multiline;plain',
                           help='write module list you need to install '
                                'like requirements.txt')
+
+        mcxt.add_argument('-e', '--detail-error', action='store_true',
+                          display_name="Detail Error Message",
+                          help='print detail error messages')
 
         # todo: using hidden option: --code option
         mcxt.add_argument('-c', '--code', action='store_true')

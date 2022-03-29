@@ -21,6 +21,7 @@ CURRENT_PATH = pathlib.Path(pathlib.Path(__file__).resolve()).parent
 SAMPLE_SCRIPT_1 = str(CURRENT_PATH / pathlib.Path('sample_script_1.py'))
 SAMPLE_SCRIPT_2 = str(CURRENT_PATH / pathlib.Path('sample_script_2.py'))
 SAMPLE_SCRIPT_10 = str(CURRENT_PATH / pathlib.Path('sample_script_10.py'))
+SAMPLE_SCRIPT_11 = str(CURRENT_PATH / pathlib.Path('sample_script_11_error.py'))
 
 
 ################################################################################
@@ -119,6 +120,34 @@ class TU(TestCase):
         try:
             r = main('--python_file', SAMPLE_SCRIPT_10, '-a1', '-a2', '-a3', '--outfile', outfile)
             self.assertEqual(r, 0)
+            with open(outfile, encoding='utf-8') as ifp:
+                rs = ifp.read()
+                print(rs)
+        finally:
+            if os.path.exists(outfile):
+                os.remove(outfile)
+
+    # =========================================================================
+    def test0030_detail_error(self):
+        # 키워드 사용, 같은 이름의 변수가 있으면 해당 변수에 대입
+        outfile = 'stderr.txt'
+        try:
+            r = main('--python_file', SAMPLE_SCRIPT_11, '-a1', '-a2', '-a3', '--detail-error', '--outfile', outfile)
+            self.assertEqual(r, 1)
+            with open(outfile, encoding='utf-8') as ifp:
+                rs = ifp.read()
+                print(rs)
+        finally:
+            if os.path.exists(outfile):
+                os.remove(outfile)
+
+    # =========================================================================
+    def test0031_detail_error(self):
+        # 키워드 사용, 같은 이름의 변수가 있으면 해당 변수에 대입
+        outfile = 'stderr.txt'
+        try:
+            r = main('--python_file', SAMPLE_SCRIPT_11, '-a1', '-a2', '-a3', '--outfile', outfile)
+            self.assertEqual(r, 1)
             with open(outfile, encoding='utf-8') as ifp:
                 rs = ifp.read()
                 print(rs)
